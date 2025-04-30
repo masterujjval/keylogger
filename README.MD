@@ -2,7 +2,7 @@
 
 # build
 ```
-build.bat
+./build.bat
 ```
 
 # listener

